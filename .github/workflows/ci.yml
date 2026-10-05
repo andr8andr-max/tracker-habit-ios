@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Start PostgreSQL
+        run: nohup node scripts/start-db.mjs > db.log 2>&1 & sleep 40; tail -n 30 db.log
+      - name: Seed
+        run: node dist/database/seed.js
+      - name: Start API
+        run: nohup node dist/main.js > api.log 2>&1 & sleep 10; curl -fsS http://127.0.0.1:4000/api/health
+      - name: Smoke tests
+        run: node scripts/smoke.mjs
+
+  client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build

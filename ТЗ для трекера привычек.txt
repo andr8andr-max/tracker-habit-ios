@@ -1,0 +1,105 @@
+# Техническое задание: Клуб предпринимателей — трекер привычек
+
+## 1. Цель
+SPA (одностраничное приложение) в браузере. Трекер привычек + контакты + ролевая модель. Браузерные уведомления. Сразу закладывается адаптив под PWA.
+
+## 2. Стек
+Фронт: React 18 + Vite, TypeScript, React Router v6, Zustand, Tailwind v3.
+Сервер: Node.js 20 + NestJS (REST), PostgreSQL 16.
+Уведомления: Web Push (web-push), node-cron.
+Контейнер: Docker.
+
+## 3. Модель данных
+
+### users
+id (uuid), email, password_hash, role (owner/employee), club_id, name, phone, avatar_url, created_at
+
+### clubs
+id, name, logo_url, address, owner_id
+
+### habits
+id, user_id, title, description, target_count, schedule (json), notifications_enabled, remind_at, created_at
+
+### habit_logs
+id, habit_id, date, status (done/skipped/pending), note, created_at
+
+### contacts
+id, user_id, name, phone, company, city, tag (vip/partner/client/inactive), note, linked_employee_id, created_at
+
+### contact_logs
+id, contact_id, action, duration_min, comment, created_at
+
+### tokens
+id, user_id, token, expires_at
+
+## 4. API (префикс /api)
+
+### Auth
+POST /auth/register   – только owner создаёт сотрудников
+POST /auth/login      – email+password → access+refresh
+POST /auth/refresh
+POST /auth/logout
+
+### Habits
+GET  /habits          – список + последний лог
+POST /habits
+PATCH /habits/:id
+DELETE /habits/:id
+POST /habits/:id/log
+GET  /habits/:id/stats  – { line, streak }
+
+### Contacts
+GET  /contacts?q=&tag=&sort=alpha|last
+GET  /contacts/:id
+PATCH /contacts/:id
+DELETE /contacts/:id   – только owner
+POST /contacts/:id/logs
+
+### Profile
+GET  /profile
+PATCH /profile        – name, phone, avatar
+PATCH /profile/password
+GET  /profile/notifications
+PATCH /profile/notifications  – { enabled, time }
+
+### Owner
+GET  /owner/employees
+POST /owner/employees
+DELETE /owner/employees/:id
+PATCH /owner/club
+
+### Stats
+GET /stats/habits
+
+## 5. Права
+owner – всё, включая /owner/*, удаление контактов, видит linked_employee_id.
+employee – только свои сущности, не видит /owner/* и чужие привязки.
+
+## 6. Структура клиента
+src/pages/ – 12 маршрутов (Dashboard, HabitList, HabitDetail, ContactList, ContactDetail, Profile, NotificationSettings, …)
+Компоненты: layout (боковая + верхняя плашка), habit (график, карточка, форма), contact (строка, форма), ui.
+
+## 7. Уведомления (Web Push)
+Три типа: напоминание (время из привычки), дневной отчёт (09:00, если есть пропуски), напоминание о пропуске (12:00, 2+ дня).
+Глобальный переключатель + время. На привычке — вкл/выкл.
+Не делаем: email, нативные push.
+
+## 8. Этапы
+1. Спринт 0 – репозиторий, Docker, CI, пустой API.
+2. Спринт 1 – auth, роли, клуб.
+3. Спринт 2 – привычки, графики, уведомления.
+4. Спринт 3 – контакты, привязка, удаление.
+5. Спринт 4 – профиль, меню.
+6. Спринт 5 – адаптив, тесты.
+7. Спринт 6 – приёмка, демо.
+
+## 9. Критерии приёмки
+12 страниц без перезагрузки (SPA).
+Владелец видит сотрудников/удаление, сотрудник — нет.
+Уведомления приходят по времени.
+Фильтр/поиск — 200 мс.
+Смена пароля — сброс остальных сессий.
+Телефон — без горизонтального скролла.
+
+## 10. Out of Scope
+Восстановление пароля, автоматическая история (Twilio/календарь), файлы в контактах, email-дайджест, PWA-установка (только манифест), брендбук (первые 2 дня после получения).
