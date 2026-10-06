@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { ApiError } from '../api/client';
+import { apiGet, ApiError } from '../api/client';
 import { Button } from '../components/ui/Button';
 import { Field, Input } from '../components/ui/Input';
 import { Spinner } from '../components/ui/Spinner';
@@ -28,12 +28,31 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<Mode>('login');
+  const [bootstrapAvailable, setBootstrapAvailable] = useState<boolean | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiGet<{ bootstrap: boolean }>('/auth/bootstrap', { skipAuth: true, silent: true })
+      .then((data) => {
+        if (!cancelled) setBootstrapAvailable(Boolean(data?.bootstrap));
+      })
+      .catch(() => {
+        if (!cancelled) setBootstrapAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (bootstrapAvailable === false) setMode('login');
+  }, [bootstrapAvailable]);
 
   if (initialized && user) return <Navigate to="/" replace />;
 
@@ -117,18 +136,20 @@ export default function Login() {
             >
               Вход
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode('bootstrap');
-                setError('');
-              }}
-              className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
-                mode === 'bootstrap' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'
-              }`}
-            >
-              Первый аккаунт
-            </button>
+            {bootstrapAvailable ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('bootstrap');
+                  setError('');
+                }}
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+                  mode === 'bootstrap' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'
+                }`}
+              >
+                Первый аккаунт
+              </button>
+            ) : null}
           </div>
 
           {mode === 'login' ? (
@@ -218,19 +239,23 @@ export default function Login() {
 
         <p className="mt-6 text-center text-xs text-slate-400">
           {initialized ? (
-            <>
-              Нет аккаунта?{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('bootstrap');
-                  setError('');
-                }}
-                className="font-medium text-brand-600 underline-offset-2 hover:text-brand-700 hover:underline"
-              >
-                Создать первый аккаунт
-              </button>
-            </>
+            bootstrapAvailable ? (
+              <>
+                Нет аккаунта?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('bootstrap');
+                    setError('');
+                  }}
+                  className="font-medium text-brand-600 underline-offset-2 hover:text-brand-700 hover:underline"
+                >
+                  Создать первый аккаунт
+                </button>
+              </>
+            ) : (
+              <span>Войдите с помощью email и пароля</span>
+            )
           ) : (
             <span className="inline-flex items-center gap-2">
               <Spinner className="h-4 w-4" />

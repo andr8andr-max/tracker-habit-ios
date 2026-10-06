@@ -68,6 +68,11 @@ export class AuthService {
     }
   }
 
+  async bootstrapStatus(): Promise<{ bootstrap: boolean }> {
+    const usersCount = await this.usersService.count();
+    return { bootstrap: usersCount === 0 };
+  }
+
   async register(dto: RegisterDto, request: Request): Promise<PublicUser> {
     const usersCount = await this.usersService.count();
 
