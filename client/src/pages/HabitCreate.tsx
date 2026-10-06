@@ -10,7 +10,7 @@ export default function HabitCreate() {
   const navigate = useNavigate();
 
   return (
-    <div className="max-w-2xl">
+    <div className="lg:max-w-[calc((200%_-_20px)/3)]">
       <PageHeader
         title="Новая привычка"
         subtitle="Опишите, что хотите отслеживать и как часто"

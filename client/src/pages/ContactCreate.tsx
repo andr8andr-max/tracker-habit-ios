@@ -24,7 +24,7 @@ export default function ContactCreate() {
   }, [isOwner, employees.length, fetchEmployees]);
 
   return (
-    <div className="max-w-2xl">
+    <div className="lg:max-w-[calc((200%_-_20px)/3)]">
       <PageHeader
         title="Новый контакт"
         subtitle="Карточка человека или компании клуба"
