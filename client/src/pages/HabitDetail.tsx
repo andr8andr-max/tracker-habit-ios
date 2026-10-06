@@ -48,6 +48,7 @@ export default function HabitDetail() {
   const updateHabit = useHabits((state) => state.updateHabit);
   const deleteHabit = useHabits((state) => state.deleteHabit);
   const logHabit = useHabits((state) => state.logHabit);
+  const incrementHabit = useHabits((state) => state.incrementHabit);
   const getStats = useHabits((state) => state.getStats);
   const openConfirm = useUI((state) => state.openConfirm);
   const toast = useUI((state) => state.toast);
@@ -89,6 +90,17 @@ export default function HabitDetail() {
     setLogBusy(true);
     try {
       await logHabit(id, status);
+      setStatsVersion((version) => version + 1);
+    } finally {
+      setLogBusy(false);
+    }
+  }
+
+  async function handleIncrement() {
+    if (!id) return;
+    setLogBusy(true);
+    try {
+      await incrementHabit(id);
       setStatsVersion((version) => version + 1);
     } finally {
       setLogBusy(false);
@@ -207,7 +219,7 @@ export default function HabitDetail() {
               <input
                 type="checkbox"
                 checked={checked}
-                disabled={logBusy}
+                disabled={logBusy || (target > 1 && !checked)}
                 onChange={(event) => void handleLog(event.target.checked ? 'done' : 'pending')}
                 className="mt-0.5 h-5 w-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 disabled:opacity-50"
               />
@@ -231,6 +243,12 @@ export default function HabitDetail() {
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
+              {target > 1 && !checked ? (
+                <Button loading={logBusy} onClick={() => void handleIncrement()}>
+                  <Icon name="plus" className="h-4 w-4" />
+                  +1 повтор
+                </Button>
+              ) : null}
               <Button
                 loading={logBusy}
                 disabled={checked}

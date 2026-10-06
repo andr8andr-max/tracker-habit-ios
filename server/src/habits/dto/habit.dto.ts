@@ -100,6 +100,12 @@ export class LogHabitDto {
   status: 'done' | 'skipped' | 'pending';
 
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10)
+  count?: number;
+
+  @IsOptional()
   @IsString()
   @MaxLength(300)
   note?: string;

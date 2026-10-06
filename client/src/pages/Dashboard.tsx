@@ -27,6 +27,7 @@ export default function Dashboard() {
   const habits = useHabits((state) => state.items);
   const fetchHabits = useHabits((state) => state.fetchHabits);
   const logHabit = useHabits((state) => state.logHabit);
+  const incrementHabit = useHabits((state) => state.incrementHabit);
   const fetchContacts = useContacts((state) => state.fetchContacts);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [recent, setRecent] = useState<Contact[]>([]);
@@ -85,6 +86,15 @@ export default function Dashboard() {
     setLogBusy(habit.id);
     try {
       await logHabit(habit.id, checked ? 'done' : 'pending');
+    } finally {
+      setLogBusy(null);
+    }
+  }
+
+  async function handleIncrement(habit: HabitWithToday) {
+    setLogBusy(habit.id);
+    try {
+      await incrementHabit(habit.id);
     } finally {
       setLogBusy(null);
     }
@@ -235,6 +245,7 @@ export default function Dashboard() {
                     habit={habit}
                     busy={logBusy === habit.id}
                     onToggle={(checked) => void handleToggle(habit, checked)}
+                    onIncrement={() => void handleIncrement(habit)}
                   />
                 ))}
               </div>

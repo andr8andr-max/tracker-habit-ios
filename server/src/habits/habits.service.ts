@@ -11,6 +11,7 @@ export interface HabitLogView {
   id: string;
   date: string;
   status: HabitLogStatus;
+  count: number | null;
   note: string | null;
   createdAt: Date;
 }
@@ -78,6 +79,7 @@ export class HabitsService {
       id: log.id,
       date: log.date,
       status: log.status,
+      count: log.count,
       note: log.note,
       createdAt: log.createdAt,
     };
@@ -95,7 +97,9 @@ export class HabitsService {
 
     const todayLog = byDate.get(today);
     const scheduled = isScheduledOn(habit.schedule, today);
-    const done = todayLog?.status === 'done' ? habit.targetCount : 0;
+    const done = todayLog
+      ? todayLog.count ?? (todayLog.status === 'done' ? habit.targetCount : 0)
+      : 0;
 
     let status: HabitItemView['today']['status'];
     if (todayLog && done >= habit.targetCount) status = 'done';
@@ -155,10 +159,25 @@ export class HabitsService {
   async upsertLog(habit: Habit, dto: LogHabitDto): Promise<{ habit: HabitItemView; log: HabitLogView }> {
     const tz = this.tz();
     const date = dto.date ?? todayInTz(tz);
+    const target = habit.targetCount;
     let log = await this.logsRepo.findOne({ where: { habitId: habit.id, date } });
 
+    let count: number;
+    let status: HabitLogStatus;
+    if (dto.status === 'skipped') {
+      count = 0;
+      status = 'skipped';
+    } else if (dto.count !== undefined) {
+      count = Math.max(0, Math.min(target, dto.count));
+      status = count >= target ? 'done' : 'pending';
+    } else {
+      count = dto.status === 'done' ? target : 0;
+      status = dto.status;
+    }
+
     if (log) {
-      log.status = dto.status;
+      log.status = status;
+      log.count = count;
       log.note = dto.note ?? null;
       log = await this.logsRepo.save(log);
     } else {
@@ -166,7 +185,8 @@ export class HabitsService {
         this.logsRepo.create({
           habitId: habit.id,
           date,
-          status: dto.status,
+          status,
+          count,
           note: dto.note ?? null,
         }),
       );

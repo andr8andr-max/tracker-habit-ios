@@ -22,29 +22,43 @@ const STATUS_LABELS: Record<string, string> = {
 interface HabitCardProps {
   habit: HabitWithToday;
   onToggle: (checked: boolean) => void;
+  onIncrement?: () => void;
   busy?: boolean;
   onDelete?: () => void;
 }
 
-export function HabitCard({ habit, onToggle, busy = false, onDelete }: HabitCardProps) {
+export function HabitCard({ habit, onToggle, onIncrement, busy = false, onDelete }: HabitCardProps) {
   const today = habit.today;
   const done = today?.done ?? 0;
   const target = today?.target ?? habit.targetCount;
   const status = today?.status ?? 'none';
   const checked = status === 'done';
+  const multi = target > 1;
   const progress = target > 0 ? Math.min(1, done / target) : 0;
 
   return (
     <div className="card flex flex-col gap-4">
       <div className="flex items-start gap-3">
-        <input
-          type="checkbox"
-          checked={checked}
-          disabled={busy}
-          onChange={(event) => onToggle(event.target.checked)}
-          aria-label={`Отметить «${habit.title}» выполненной`}
-          className="mt-1 h-5 w-5 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-500 disabled:opacity-50"
-        />
+        {multi && !checked ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onIncrement}
+            aria-label={`Отметить повтор «${habit.title}»`}
+            className="mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-300 text-sm font-bold leading-none text-brand-600 transition hover:border-brand-500 hover:bg-brand-50 focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
+          >
+            +
+          </button>
+        ) : (
+          <input
+            type="checkbox"
+            checked={checked}
+            disabled={busy}
+            onChange={(event) => onToggle(event.target.checked)}
+            aria-label={`Отметить «${habit.title}» выполненной`}
+            className="mt-1 h-5 w-5 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-500 disabled:opacity-50"
+          />
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <Link

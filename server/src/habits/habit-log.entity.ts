@@ -22,6 +22,9 @@ export class HabitLog {
   @Column({ type: 'varchar', length: 20 })
   status: HabitLogStatus;
 
+  @Column({ type: 'int', nullable: true })
+  count: number | null;
+
   @Column({ type: 'varchar', length: 300, nullable: true })
   note: string | null;
 

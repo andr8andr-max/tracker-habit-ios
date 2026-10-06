@@ -17,6 +17,7 @@ export default function HabitList() {
   const loading = useHabits((state) => state.loading);
   const fetchHabits = useHabits((state) => state.fetchHabits);
   const logHabit = useHabits((state) => state.logHabit);
+  const incrementHabit = useHabits((state) => state.incrementHabit);
   const deleteHabit = useHabits((state) => state.deleteHabit);
   const openConfirm = useUI((state) => state.openConfirm);
   const toast = useUI((state) => state.toast);
@@ -44,6 +45,15 @@ export default function HabitList() {
     setLogBusy(habit.id);
     try {
       await logHabit(habit.id, checked ? 'done' : 'pending');
+    } finally {
+      setLogBusy(null);
+    }
+  }
+
+  async function handleIncrement(habit: HabitWithToday) {
+    setLogBusy(habit.id);
+    try {
+      await incrementHabit(habit.id);
     } finally {
       setLogBusy(null);
     }
@@ -124,6 +134,7 @@ export default function HabitList() {
                   habit={habit}
                   busy={logBusy === habit.id}
                   onToggle={(checked) => void handleToggle(habit, checked)}
+                  onIncrement={() => void handleIncrement(habit)}
                   onDelete={() => handleDelete(habit)}
                 />
               ))}

@@ -20,6 +20,7 @@ interface HabitsState {
   updateHabit: (id: string, input: Partial<HabitInput>) => Promise<void>;
   deleteHabit: (id: string) => Promise<void>;
   logHabit: (id: string, status: LogStatus, date?: string) => Promise<void>;
+  incrementHabit: (id: string) => Promise<void>;
   getStats: (id: string) => Promise<HabitStats>;
 }
 
@@ -53,6 +54,14 @@ export const useHabits = create<HabitsState>((set, get) => ({
   },
   logHabit: async (id, status, date) => {
     await apiPost(`/habits/${id}/log`, { status, ...(date ? { date } : {}) });
+    await get().fetchHabits();
+  },
+  incrementHabit: async (id) => {
+    const item = get().items.find((habit) => habit.id === id);
+    if (!item) return;
+    const target = item.today?.target ?? item.targetCount;
+    const next = Math.min(target, (item.today?.done ?? 0) + 1);
+    await apiPost(`/habits/${id}/log`, { status: 'pending', count: next });
     await get().fetchHabits();
   },
   getStats: async (id) => {

@@ -33,6 +33,7 @@ export interface HabitLog {
   id: string;
   date: string;
   status: LogStatus;
+  count?: number | null;
   note: string | null;
   createdAt: string;
 }
